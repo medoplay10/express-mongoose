@@ -7,6 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
+    "typeRoots": ["./src/util/types", "./node_modules/@types"]
   },
   "include": ["src/**/*"]
 }
