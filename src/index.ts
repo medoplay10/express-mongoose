@@ -9,6 +9,15 @@ import { authRoute } from "./modules/auth/routes/auth.route";
 import { User } from "../src/modules/user/models/user.model";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import session from "express-session";
+import connectMongoDBSession from "connect-mongodb-session";
+
+const MongoDBStore = connectMongoDBSession(session);
+
+var store = new MongoDBStore({
+  uri: process.env.MONGO_URI!,
+  collection: "mySessions",
+});
 
 dotenv.config();
 
@@ -24,20 +33,31 @@ app.use(bodyParser.json());
 // Middleware to parse cookies
 app.use(cookieParser());
 
-app.use(async (req, res, next) => {
-  try {
-    const user = await User.findById("66bb4cbd60a7d6cd8aef6ea9");
-    // req.isLoggedIn = true;
-    req.user = new User({
-      _id: user!._id,
-      username: user!.username,
-      email: user!.email,
-      cart: user!.cart,
-    });
+app.use(
+  session({
+    secret: "keyboard cat",
+    resave: true,
+    store: store,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+    },
+    saveUninitialized: true,
+  })
+);
+
+app.use(async (req: any, res, next) => {
+  if (!req.session.user) {
     next();
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error fetching data" });
+  } else {
+    try {
+      const userId = req.session.user._id;
+      const user = await User.findById(userId);
+      req.user = user;
+      next();
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error fetching data" });
+    }
   }
 });
 

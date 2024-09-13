@@ -17,7 +17,7 @@ const addProductToCart = async (req: any, res: any) => {
   }
 };
 
-const getCart = async (req: Request, res: any) => {
+const getCart = async (req: any, res: any) => {
   try {
     const user = await req.user!.populate("cart.items.productId");
     res.status(200).json(user.cart);
